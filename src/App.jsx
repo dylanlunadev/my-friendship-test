@@ -32,7 +32,7 @@ const QUESTIONS = [
   { id: 27, question: "¿Cuál es mi clima ideal?", options: ["Mucho calor", "Frío polar", "Templado", "Lluvioso"], correct: 3 },
   { id: 28, question: "¿Qué aplicación uso más?", options: ["WhatsApp", "Spotify", "Netflix", "Juegos"], correct: 0 },
   { id: 29, question: "¿Cuál es mi mayor sueño?", options: ["Viajar por el mundo", "Tener éxito laboral", "Formar una familia", "Ser famoso"], correct: 3 },
-  { id: 30, question: "¿Qué prefiero en un hombre?", options: ["Alto, lindo y con dinero", "Alto, varonil y dotado", "Gordito, alto y cariñoso", "Todas las anteriores"], correct: 3 },
+  { id: 30, question: "¿Qué animal exotico quiero tener?", options: ["Zorro del desierto", "Serpiente", "Tiburones pequeños", "Medusas"], correct: 0 },
 ];
 
 export default function App() {
