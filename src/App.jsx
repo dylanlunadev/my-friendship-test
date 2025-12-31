@@ -39,7 +39,8 @@ export default function App() {
   const [gameState, setGameState] = useState('START'); // START, NAME_ENTRY, QUIZ, RESULT
   const [userName, setUserName] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [score, setScore] = useState(0);
+  const [userAnswers, setUserAnswers] = useState([]); // Guardamos { selected, correct, isCorrect, question }
+  const [showReview, setShowReview] = useState(false);
 
   const totalQuestions = QUESTIONS.length;
   const passThreshold = 0.8; 
@@ -51,14 +52,23 @@ export default function App() {
     if (userName.trim().length > 0) {
       setGameState('QUIZ');
       setCurrentQuestion(0);
-      setScore(0);
+      setUserAnswers([]);
+      setShowReview(false);
     }
   };
 
   const handleAnswer = (optionIndex) => {
-    const isCorrect = optionIndex === QUESTIONS[currentQuestion].correct;
+    const questionData = QUESTIONS[currentQuestion];
+    const isCorrect = optionIndex === questionData.correct;
     
-    if (isCorrect) setScore(prev => prev + 1);
+    const answerLog = {
+      question: questionData.question,
+      selectedLabel: questionData.options[optionIndex],
+      correctLabel: questionData.options[questionData.correct],
+      isCorrect
+    };
+
+    setUserAnswers([...userAnswers, answerLog]);
 
     if (currentQuestion + 1 < totalQuestions) {
       setCurrentQuestion(currentQuestion + 1);
@@ -71,14 +81,16 @@ export default function App() {
     setGameState('START');
     setUserName('');
     setCurrentQuestion(0);
-    setScore(0);
+    setUserAnswers([]);
+    setShowReview(false);
   };
 
+  const score = userAnswers.filter(a => a.isCorrect).length;
   const hasPassed = score >= passingScore;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-slate-100 flex items-center justify-center p-4 font-sans text-slate-800">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100 flex items-center justify-center p-4 font-sans text-slate-800">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 my-8">
         
         {/* 1. Pantalla de Bienvenida */}
         {gameState === 'START' && (
@@ -86,13 +98,13 @@ export default function App() {
             <div className="bg-indigo-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
               <Heart className="text-indigo-600 w-12 h-12 animate-pulse" />
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 mb-2">Test de Amistad</h1>
-            <p className="text-slate-500 mb-8 leading-relaxed">¿Realmente sabes todo sobre mí? Demuéstralo respondiendo este test de 30 preguntas.</p>
+            <h1 className="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Test de Amistad</h1>
+            <p className="text-slate-500 mb-8 leading-relaxed">¿Realmente sabes todo sobre mí? Demuéstralo respondiendo este test de {totalQuestions} preguntas.</p>
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-8 text-sm text-amber-800 text-left">
               <p className="font-bold flex items-center gap-2 mb-1">
-                <Trophy className="w-4 h-4" /> Objetivo:
+                <Trophy className="w-4 h-4 text-amber-600" /> Objetivo de Amigo:
               </p>
-              Debes acertar el 80% ({passingScore} respuestas) para considerarte un "Mejor Amigo".
+              Debes acertar al menos el 80% ({passingScore} respuestas) para ganar el test.
             </div>
             <button 
               onClick={startNameEntry}
@@ -107,8 +119,8 @@ export default function App() {
         {/* 2. Pantalla de Registro de Nombre */}
         {gameState === 'NAME_ENTRY' && (
           <div className="p-8 animate-in slide-in-from-right duration-300">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">¿Quién eres?</h2>
-            <p className="text-slate-500 mb-8">Por favor, escribe tu nombre para empezar el desafío.</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Identifícate</h2>
+            <p className="text-slate-500 mb-8">Escribe tu nombre para saber quién está haciendo el test.</p>
             
             <div className="relative mb-8">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -116,7 +128,7 @@ export default function App() {
               </div>
               <input
                 type="text"
-                placeholder="Tu nombre completo"
+                placeholder="Ej: Juan Pérez"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 className="block w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none text-lg font-medium"
@@ -144,13 +156,12 @@ export default function App() {
           <div className="p-6 md:p-8 animate-in fade-in duration-300">
             <div className="flex justify-between items-end mb-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-indigo-500">Amigo: {userName}</span>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {currentQuestion + 1} <span className="text-slate-300">/ {totalQuestions}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-2 py-1 rounded">Usuario: {userName}</span>
+                <h2 className="text-2xl font-bold text-slate-900 mt-2">
+                  {currentQuestion + 1} <span className="text-slate-300 text-lg">/ {totalQuestions}</span>
                 </h2>
               </div>
               <div className="text-right">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Progreso</span>
                 <div className="w-24 h-2 bg-slate-100 rounded-full mt-1 overflow-hidden">
                   <div 
                     className="h-full bg-indigo-500 transition-all duration-300" 
@@ -171,12 +182,12 @@ export default function App() {
                 <button
                   key={index}
                   onClick={() => handleAnswer(index)}
-                  className="group relative w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 flex items-center gap-4 active:scale-95"
+                  className="group relative w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 flex items-center gap-4 active:scale-[0.98]"
                 >
-                  <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-indigo-100 flex items-center justify-center font-bold text-slate-400 group-hover:text-indigo-600 transition-colors uppercase">
+                  <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-indigo-100 flex items-center justify-center font-bold text-slate-400 group-hover:text-indigo-600 transition-colors uppercase text-sm">
                     {String.fromCharCode(65 + index)}
                   </span>
-                  <span className="font-semibold text-slate-600 group-hover:text-indigo-900">{option}</span>
+                  <span className="font-semibold text-slate-600 group-hover:text-indigo-900 leading-tight">{option}</span>
                 </button>
               ))}
             </div>
@@ -185,68 +196,105 @@ export default function App() {
 
         {/* 4. Pantalla de Resultados Finales */}
         {gameState === 'RESULT' && (
-          <div className="p-8 text-center animate-in zoom-in duration-500">
-            {hasPassed ? (
-              <>
-                <div className="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <Trophy className="text-green-600 w-12 h-12" />
-                </div>
-                <h2 className="text-3xl font-black text-slate-900 mb-1">¡Felicidades, {userName}!</h2>
-                <p className="text-green-600 font-bold mb-6 text-lg tracking-wide uppercase">Amigo de Verdad Detectado</p>
-              </>
-            ) : (
-              <>
-                <div className="bg-rose-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <XCircle className="text-rose-600 w-12 h-12" />
-                </div>
-                <h2 className="text-3xl font-black text-slate-900 mb-1">Lo siento, {userName}</h2>
-                <p className="text-rose-600 font-bold mb-6 text-lg tracking-wide uppercase">Necesitas conocerme más</p>
-              </>
-            )}
+          <div className="animate-in fade-in duration-500 max-h-[85vh] overflow-y-auto custom-scrollbar">
+            <div className="p-8 text-center sticky top-0 bg-white z-10 border-b border-slate-50">
+              {hasPassed ? (
+                <>
+                  <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <Trophy className="text-green-600 w-10 h-10" />
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 mb-1">¡Increíble, {userName}!</h2>
+                  <p className="text-green-600 font-bold mb-4 text-xs tracking-widest uppercase italic">Amigo nivel Experto</p>
+                </>
+              ) : (
+                <>
+                  <div className="bg-rose-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <XCircle className="text-rose-600 w-10 h-10" />
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 mb-1">Uff, {userName}...</h2>
+                  <p className="text-rose-600 font-bold mb-4 text-xs tracking-widest uppercase italic">Necesitas ponerme más atención</p>
+                </>
+              )}
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-tighter">Puntuación Final</p>
-                <p className="text-3xl font-black text-slate-800">{score} <span className="text-lg text-slate-400 font-normal">/ {totalQuestions}</span></p>
-              </div>
-              <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-tighter">Porcentaje</p>
-                <p className="text-3xl font-black text-slate-800">{Math.round((score / totalQuestions) * 100)}%</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Puntos</p>
+                  <p className="text-2xl font-black text-slate-800">{score} / {totalQuestions}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Efectividad</p>
+                  <p className="text-2xl font-black text-slate-800">{Math.round((score / totalQuestions) * 100)}%</p>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3 mb-8">
-                <div className="flex items-center justify-between text-sm p-4 bg-green-50 border border-green-100 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
-                      <CheckCircle2 className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-green-800 font-medium">Aciertos</span>
-                  </div>
-                  <span className="font-black text-xl text-green-700">{score}</span>
+            <div className="p-6 space-y-4">
+              {/* Botón de revisión colapsable */}
+              <button 
+                onClick={() => setShowReview(!showReview)}
+                className="w-full flex items-center justify-between p-4 bg-slate-900 text-white rounded-2xl font-bold transition-all hover:bg-black"
+              >
+                <div className="flex items-center gap-2">
+                  <Info className="w-4 h-4" />
+                  {showReview ? 'Ocultar Revisión' : 'Ver en qué fallaste'}
                 </div>
-                <div className="flex items-center justify-between text-sm p-4 bg-rose-50 border border-rose-100 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center">
-                      <XCircle className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-rose-800 font-medium">Errores</span>
-                  </div>
-                  <span className="font-black text-xl text-rose-700">{totalQuestions - score}</span>
-                </div>
-            </div>
+                {showReview ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
 
-            <button 
-              onClick={resetQuiz}
-              className="w-full bg-slate-900 hover:bg-black text-white font-bold py-5 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-xl active:scale-95"
-            >
-              <RefreshCw className="w-5 h-5" />
-              Intentar de Nuevo
-            </button>
+              {showReview && (
+                <div className="space-y-3 animate-in slide-in-from-top-4 duration-300 pb-4">
+                  <h3 className="text-sm font-black text-slate-400 uppercase px-2 mb-4">Detalle de respuestas:</h3>
+                  {userAnswers.map((ans, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`p-4 rounded-2xl border ${
+                        ans.isCorrect ? 'bg-green-50 border-green-100' : 'bg-rose-50 border-rose-100'
+                      }`}
+                    >
+                      <div className="flex gap-3">
+                        <div className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+                          ans.isCorrect ? 'bg-green-500' : 'bg-rose-500'
+                        }`}>
+                          {ans.isCorrect ? <CheckCircle2 className="w-3 h-3 text-white" /> : <XCircle className="w-3 h-3 text-white" />}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-slate-800 mb-2 leading-tight">{idx + 1}. {ans.question}</p>
+                          <div className="grid grid-cols-1 gap-1 text-xs">
+                            <p className={`${ans.isCorrect ? 'text-green-700' : 'text-rose-700'} font-medium`}>
+                              Tu respuesta: <span className="font-bold underline">{ans.selectedLabel}</span>
+                            </p>
+                            {!ans.isCorrect && (
+                              <p className="text-slate-600 font-medium">
+                                Respuesta correcta: <span className="text-green-600 font-bold">{ans.correctLabel}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button 
+                onClick={resetQuiz}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]"
+              >
+                <RefreshCw className="w-5 h-5" />
+                Volver al Inicio
+              </button>
+            </div>
           </div>
         )}
 
       </div>
+      
+      {/* Estilos para una barra de scroll personalizada si hay muchas preguntas */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+      `}} />
     </div>
   );
 }
